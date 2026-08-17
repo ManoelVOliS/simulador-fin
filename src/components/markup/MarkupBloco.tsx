@@ -1,9 +1,8 @@
-import { Info } from 'lucide-react'
 import { useEffect, useMemo, type Dispatch, type SetStateAction } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { FloatingLabelInput } from '@/components/ui/floating-label-input'
+import { InfoBubble } from '@/components/ui/info-bubble'
 import { SegmentedToggle } from '@/components/ui/segmented-toggle'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import {
   calcularCustoUnitarioPorConversao,
   calcularMarkup,
@@ -80,17 +79,12 @@ export function MarkupBloco({ state, onChange }: MarkupBlocoProps) {
         <CardHeader>
           <CardTitle className="flex items-center gap-1.5">
             Preço sugerido
-            <Tooltip>
-              <TooltipTrigger aria-label="Sobre a fórmula de markup">
-                <Info className="text-muted-foreground size-3.5" />
-              </TooltipTrigger>
-              <TooltipContent>
-                Aqui usamos "markup sobre preço de venda" (prática comum no Brasil — os percentuais
-                são fatia do preço final, por isso 100 ÷ (100 − soma%)). É diferente do "markup sobre
-                custo" de livros americanos como o Garrison, onde Preço = Custo × (1 + %) e o
-                percentual multiplica direto o custo.
-              </TooltipContent>
-            </Tooltip>
+            <InfoBubble label="Sobre a fórmula de markup">
+              Aqui usamos "markup sobre preço de venda" (prática comum no Brasil — os percentuais são
+              fatia do preço final, por isso 100 ÷ (100 − soma%)). É diferente do "markup sobre custo"
+              de livros americanos como o Garrison, onde Preço = Custo × (1 + %) e o percentual
+              multiplica direto o custo.
+            </InfoBubble>
           </CardTitle>
         </CardHeader>
         <CardContent className="grid gap-4">
@@ -196,7 +190,13 @@ export function MarkupBloco({ state, onChange }: MarkupBlocoProps) {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <p className="text-muted-foreground text-sm">Índice de Markup</p>
+              <p className="text-muted-foreground flex items-center gap-1 text-sm">
+                Índice de Markup
+                <InfoBubble label="O que é o Índice de Markup">
+                  Multiplicador aplicado sobre o custo unitário pra chegar no preço de venda. Índice
+                  2,5 significa que o preço é 2,5× o custo.
+                </InfoBubble>
+              </p>
               <p className="text-lg font-medium">
                 {resultado.indiceMarkup.toLocaleString('pt-BR', { maximumFractionDigits: 2 })}
               </p>

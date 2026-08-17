@@ -1,7 +1,9 @@
+import type { ReactNode } from 'react'
 import { useMemo } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { FloatingLabelInput } from '@/components/ui/floating-label-input'
+import { InfoBubble } from '@/components/ui/info-bubble'
 import {
   calcularCustoMeta,
   calcularModoReverso,
@@ -39,11 +41,23 @@ const composicaoLabels = {
   margemLucro: 'Margem de Lucro',
 } as const
 
-function Estatistica({ label, valor }: { label: string; valor: string }) {
+function Estatistica({ label, valor, info }: { label: string; valor: string; info?: ReactNode }) {
   return (
     <div>
-      <p className="text-muted-foreground text-xs">{label}</p>
+      <p className="text-muted-foreground flex items-center gap-1 text-xs">
+        {label}
+        {info && <InfoBubble label={`O que é ${label}`}>{info}</InfoBubble>}
+      </p>
       <p className="text-lg font-semibold">{valor}</p>
+    </div>
+  )
+}
+
+function CampoComInfo({ children, info, label }: { children: ReactNode; info: ReactNode; label: string }) {
+  return (
+    <div className="flex items-center gap-2">
+      <div className="flex-1">{children}</div>
+      <InfoBubble label={`O que é ${label}`}>{info}</InfoBubble>
     </div>
   )
 }
@@ -198,6 +212,7 @@ export function PrecificacaoBloco({ state, onChange, onEditCampoHerdado }: Preci
             <Estatistica
               label="Margem de Contribuição"
               valor={formatarPercentual(resultado.margemContribuicaoPercentual)}
+              info="(Preço − Custo Variável Total) ÷ Preço. É o que sobra da venda pra pagar despesas fixas e gerar lucro — não confundir com o Índice de Markup, que é só o multiplicador sobre o custo."
             />
           </div>
           <div className="flex flex-wrap gap-2 border-t pt-4">
@@ -244,34 +259,54 @@ export function PrecificacaoBloco({ state, onChange, onEditCampoHerdado }: Preci
               value={state.custo}
               onChange={setCampoHerdado('custo')}
             />
-            <FloatingLabelInput
-              id="precificacao-df"
-              label="Despesas Fixas — DF (%)"
-              inputMode="decimal"
-              value={state.despesasFixas}
-              onChange={setField('despesasFixas')}
-            />
-            <FloatingLabelInput
-              id="precificacao-dv"
-              label="Despesas Variáveis — DV (%)"
-              inputMode="decimal"
-              value={state.despesasVariaveis}
-              onChange={setField('despesasVariaveis')}
-            />
-            <FloatingLabelInput
-              id="precificacao-ml"
-              label="Margem de Lucro — ML (%) — herdada do Markup, editável"
-              inputMode="decimal"
-              value={state.margemLucro}
-              onChange={setCampoHerdado('margemLucro')}
-            />
-            <FloatingLabelInput
-              id="precificacao-taxa-canal"
-              label="Taxa de canal de venda (%)"
-              inputMode="decimal"
-              value={state.taxaCanal}
-              onChange={setField('taxaCanal')}
-            />
+            <CampoComInfo
+              label="Despesas Fixas"
+              info="Custos que não mudam com o volume de vendas (aluguel, salários fixos etc.), como % do preço de venda — não confundir com o valor absoluto usado no Ponto de Equilíbrio, mais abaixo."
+            >
+              <FloatingLabelInput
+                id="precificacao-df"
+                label="Despesas Fixas — DF (%)"
+                inputMode="decimal"
+                value={state.despesasFixas}
+                onChange={setField('despesasFixas')}
+              />
+            </CampoComInfo>
+            <CampoComInfo
+              label="Despesas Variáveis"
+              info="Custos que variam junto com a venda (comissão, embalagem, impostos sobre venda etc.), como % do preço."
+            >
+              <FloatingLabelInput
+                id="precificacao-dv"
+                label="Despesas Variáveis — DV (%)"
+                inputMode="decimal"
+                value={state.despesasVariaveis}
+                onChange={setField('despesasVariaveis')}
+              />
+            </CampoComInfo>
+            <CampoComInfo
+              label="Margem de Lucro"
+              info="Quanto de lucro você quer que sobre, como % do preço de venda final (não do custo)."
+            >
+              <FloatingLabelInput
+                id="precificacao-ml"
+                label="Margem de Lucro — ML (%) — herdada do Markup, editável"
+                inputMode="decimal"
+                value={state.margemLucro}
+                onChange={setCampoHerdado('margemLucro')}
+              />
+            </CampoComInfo>
+            <CampoComInfo
+              label="Taxa de canal"
+              info="Comissão ou taxa cobrada por onde você vende (marketplace, maquininha de cartão etc.), como % do preço."
+            >
+              <FloatingLabelInput
+                id="precificacao-taxa-canal"
+                label="Taxa de canal de venda (%)"
+                inputMode="decimal"
+                value={state.taxaCanal}
+                onChange={setField('taxaCanal')}
+              />
+            </CampoComInfo>
             {percentuaisInvalidos && (
               <p className="text-destructive text-xs font-medium">
                 Soma de DF + DV + ML + Taxa de canal está em {formatarPercentual(somaPercentuais)} —
@@ -305,7 +340,14 @@ export function PrecificacaoBloco({ state, onChange, onEditCampoHerdado }: Preci
 
       <Card>
         <CardHeader>
-          <CardTitle>Modo reverso</CardTitle>
+          <CardTitle className="flex items-center gap-1.5">
+            Modo reverso
+            <InfoBubble label="Como funciona o modo reverso">
+              Em vez de partir do custo pra achar o preço, você informa o preço que o mercado aceita e
+              o sistema devolve a margem de contribuição resultante — útil pra checar se um preço já
+              praticado faz sentido.
+            </InfoBubble>
+          </CardTitle>
         </CardHeader>
         <CardContent className="grid gap-4">
           <FloatingLabelInput
@@ -334,8 +376,13 @@ export function PrecificacaoBloco({ state, onChange, onEditCampoHerdado }: Preci
           />
           {custoMeta !== null && (
             <div>
-              <p className="text-muted-foreground text-sm">
+              <p className="text-muted-foreground flex items-center gap-1 text-sm">
                 Custo-meta — custo máximo pra manter esse lucro nesse preço
+                <InfoBubble label="O que é Custo-meta">
+                  Custo-meta = Preço de venda − Lucro desejado. Em vez de calcular o preço a partir do
+                  custo (cost-plus), parte do preço que o mercado aceita pra achar o custo máximo que
+                  ainda permite o lucro que você quer (target costing).
+                </InfoBubble>
               </p>
               <p className="text-2xl font-semibold">{formatarReais(custoMeta)}</p>
             </div>
@@ -345,7 +392,13 @@ export function PrecificacaoBloco({ state, onChange, onEditCampoHerdado }: Preci
 
       <Card>
         <CardHeader>
-          <CardTitle>Ponto de Equilíbrio</CardTitle>
+          <CardTitle className="flex items-center gap-1.5">
+            Ponto de Equilíbrio
+            <InfoBubble label="O que é Ponto de Equilíbrio">
+              Quanto você precisa vender (em R$ ou em unidades) pra cobrir exatamente as despesas
+              fixas totais — abaixo disso dá prejuízo, acima começa o lucro.
+            </InfoBubble>
+          </CardTitle>
         </CardHeader>
         <CardContent className="grid gap-4">
           <FloatingLabelInput

@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { FloatingLabelInput } from '@/components/ui/floating-label-input'
+import { InfoBubble } from '@/components/ui/info-bubble'
 import { ProgressWithValue } from '@/components/ui/progress-with-value'
 import { SegmentedToggle } from '@/components/ui/segmented-toggle'
 import {
@@ -332,7 +333,13 @@ export function CmvBloco({ state, onChange }: CmvBlocoProps) {
             <p className="text-2xl font-semibold">{formatarReais(custoReais)}</p>
           </div>
           <div>
-            <p className="text-muted-foreground text-sm">{rotulo} em %</p>
+            <p className="text-muted-foreground flex items-center gap-1 text-sm">
+              {rotulo} em %
+              <InfoBubble label={`O que é ${rotulo}%`}>
+                {rotulo} dividido pela Receita Bruta, em %. Mostra quanto da sua receita foi consumido
+                pelo custo — quanto menor, mais sobra de margem antes das outras despesas.
+              </InfoBubble>
+            </p>
             <p className="text-2xl font-semibold">{formatarPercentual(custoPercentual)}</p>
           </div>
           <ProgressWithValue
