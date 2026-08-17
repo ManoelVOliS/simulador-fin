@@ -14,7 +14,7 @@ export function InfoBubble({ children, label = 'Mais informações' }: InfoBubbl
         <button
           type="button"
           aria-label={label}
-          className="text-muted-foreground hover:text-foreground inline-flex size-3.5 shrink-0 cursor-help items-center justify-center align-middle"
+          className="text-muted-foreground hover:text-foreground -m-1.5 inline-flex shrink-0 cursor-help items-center justify-center rounded-full p-1.5 align-middle"
         >
           <Info className="size-3.5" />
         </button>

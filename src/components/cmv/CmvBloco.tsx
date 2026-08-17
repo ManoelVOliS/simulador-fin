@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { ExportMenu } from '@/components/ui/export-menu'
 import { FloatingLabelInput } from '@/components/ui/floating-label-input'
 import { InfoBubble } from '@/components/ui/info-bubble'
 import { ProgressWithValue } from '@/components/ui/progress-with-value'
@@ -16,7 +17,9 @@ import {
   type ModoCmv,
   type StatusCmv,
 } from '@/lib/calculos'
-import { exportarCsv, exportarPdf, exportarXlsx, type LinhaExportacao } from '@/lib/exportar'
+import type { LinhaExportacao } from '@/lib/exportar'
+import { cmvExemploProducao, cmvExemploRevenda } from '@/lib/exemplos'
+import { cmvInicial } from '@/lib/estados-iniciais'
 
 export interface CmvFormState {
   modo: ModoCmv
@@ -44,13 +47,13 @@ interface CmvBlocoProps {
 const statusLabel: Record<NonNullable<StatusCmv>, string> = {
   acima: 'acima da meta',
   dentro: 'dentro da meta',
-  abaixo: 'abaixo da meta',
+  abaixo: 'abaixo da meta (bom sinal)',
 }
 
 const statusClasses: Record<NonNullable<StatusCmv>, string> = {
   acima: 'text-destructive',
   dentro: 'text-primary',
-  abaixo: 'text-muted-foreground',
+  abaixo: 'text-emerald-600 dark:text-emerald-400',
 }
 
 function montarLinhasExportacaoCmv(
@@ -98,7 +101,10 @@ function montarLinhasExportacaoCmv(
             campo: 'Estoque Final de Produtos Acabados (R$)',
             valor: formatarReais(toNumber(state.paEstoqueFinal)),
           },
-          { campo: 'Consumo de Matéria-Prima (R$)', valor: formatarReais(resultadoProducao.consumoMateriaPrima) },
+          {
+            campo: 'Consumo de Matéria-Prima (R$)',
+            valor: formatarReais(resultadoProducao.consumoMateriaPrima),
+          },
           {
             campo: 'Custo de Produção do Período (R$)',
             valor: formatarReais(resultadoProducao.custoProducaoPeriodo),
@@ -176,6 +182,15 @@ export function CmvBloco({ state, onChange }: CmvBlocoProps) {
     }
   }
 
+  function verExemplo() {
+    const exemplo = state.modo === 'revenda' ? cmvExemploRevenda : cmvExemploProducao
+    onChange({ ...exemplo, modo: state.modo })
+  }
+
+  function limpar() {
+    onChange(cmvInicial)
+  }
+
   return (
     <div className="grid gap-4 md:grid-cols-2">
       <Card>
@@ -183,6 +198,15 @@ export function CmvBloco({ state, onChange }: CmvBlocoProps) {
           <CardTitle>Dados do período</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-4">
+          <div className="flex flex-wrap gap-2">
+            <Button type="button" variant="outline" size="sm" onClick={verExemplo}>
+              Ver exemplo
+            </Button>
+            <Button type="button" variant="ghost" size="sm" onClick={limpar}>
+              Limpar
+            </Button>
+          </div>
+
           <SegmentedToggle
             ariaLabel="Tipo de negócio"
             value={state.modo}
@@ -197,21 +221,24 @@ export function CmvBloco({ state, onChange }: CmvBlocoProps) {
             <>
               <FloatingLabelInput
                 id="cmv-estoque-inicial"
-                label="Estoque Inicial (R$)"
+                label="Estoque Inicial"
+                unidade="R$"
                 inputMode="decimal"
                 value={state.estoqueInicial}
                 onChange={setField('estoqueInicial')}
               />
               <FloatingLabelInput
                 id="cmv-compras"
-                label="Compras (R$)"
+                label="Compras"
+                unidade="R$"
                 inputMode="decimal"
                 value={state.compras}
                 onChange={setField('compras')}
               />
               <FloatingLabelInput
                 id="cmv-estoque-final"
-                label="Estoque Final (R$)"
+                label="Estoque Final"
+                unidade="R$"
                 inputMode="decimal"
                 value={state.estoqueFinal}
                 onChange={setField('estoqueFinal')}
@@ -222,21 +249,24 @@ export function CmvBloco({ state, onChange }: CmvBlocoProps) {
               <p className="text-muted-foreground text-xs font-medium">Matéria-Prima</p>
               <FloatingLabelInput
                 id="cmv-mp-estoque-inicial"
-                label="Estoque Inicial de Matéria-Prima (R$)"
+                label="Estoque Inicial de Matéria-Prima"
+                unidade="R$"
                 inputMode="decimal"
                 value={state.mpEstoqueInicial}
                 onChange={setField('mpEstoqueInicial')}
               />
               <FloatingLabelInput
                 id="cmv-mp-compras"
-                label="Compras de Matéria-Prima (R$)"
+                label="Compras de Matéria-Prima"
+                unidade="R$"
                 inputMode="decimal"
                 value={state.mpCompras}
                 onChange={setField('mpCompras')}
               />
               <FloatingLabelInput
                 id="cmv-mp-estoque-final"
-                label="Estoque Final de Matéria-Prima (R$)"
+                label="Estoque Final de Matéria-Prima"
+                unidade="R$"
                 inputMode="decimal"
                 value={state.mpEstoqueFinal}
                 onChange={setField('mpEstoqueFinal')}
@@ -245,28 +275,32 @@ export function CmvBloco({ state, onChange }: CmvBlocoProps) {
               <p className="text-muted-foreground mt-2 text-xs font-medium">Produção</p>
               <FloatingLabelInput
                 id="cmv-mao-de-obra"
-                label="Mão de Obra Direta (R$)"
+                label="Mão de Obra Direta"
+                unidade="R$"
                 inputMode="decimal"
                 value={state.maoDeObraDireta}
                 onChange={setField('maoDeObraDireta')}
               />
               <FloatingLabelInput
                 id="cmv-cif"
-                label="Custos Indiretos de Fabricação (R$)"
+                label="Custos Indiretos de Fabricação"
+                unidade="R$"
                 inputMode="decimal"
                 value={state.custosIndiretosFabricacao}
                 onChange={setField('custosIndiretosFabricacao')}
               />
               <FloatingLabelInput
                 id="cmv-pe-estoque-inicial"
-                label="Produtos em Elaboração — Inicial (R$) — opcional"
+                label="Produtos em Elaboração — Inicial — opcional"
+                unidade="R$"
                 inputMode="decimal"
                 value={state.peEstoqueInicial}
                 onChange={setField('peEstoqueInicial')}
               />
               <FloatingLabelInput
                 id="cmv-pe-estoque-final"
-                label="Produtos em Elaboração — Final (R$) — opcional"
+                label="Produtos em Elaboração — Final — opcional"
+                unidade="R$"
                 inputMode="decimal"
                 value={state.peEstoqueFinal}
                 onChange={setField('peEstoqueFinal')}
@@ -275,14 +309,16 @@ export function CmvBloco({ state, onChange }: CmvBlocoProps) {
               <p className="text-muted-foreground mt-2 text-xs font-medium">Produtos Acabados</p>
               <FloatingLabelInput
                 id="cmv-pa-estoque-inicial"
-                label="Estoque Inicial de Produtos Acabados (R$)"
+                label="Estoque Inicial de Produtos Acabados"
+                unidade="R$"
                 inputMode="decimal"
                 value={state.paEstoqueInicial}
                 onChange={setField('paEstoqueInicial')}
               />
               <FloatingLabelInput
                 id="cmv-pa-estoque-final"
-                label="Estoque Final de Produtos Acabados (R$)"
+                label="Estoque Final de Produtos Acabados"
+                unidade="R$"
                 inputMode="decimal"
                 value={state.paEstoqueFinal}
                 onChange={setField('paEstoqueFinal')}
@@ -292,14 +328,16 @@ export function CmvBloco({ state, onChange }: CmvBlocoProps) {
 
           <FloatingLabelInput
             id="cmv-receita-bruta"
-            label="Receita Bruta (R$)"
+            label="Receita Bruta"
+            unidade="R$"
             inputMode="decimal"
             value={state.receitaBruta}
             onChange={setField('receitaBruta')}
           />
           <FloatingLabelInput
             id="cmv-ideal"
-            label={`${rotulo} ideal (%) — opcional`}
+            label={`${rotulo} ideal — opcional`}
+            unidade="%"
             inputMode="decimal"
             value={state.cmvIdeal}
             onChange={setField('cmvIdeal')}
@@ -351,31 +389,12 @@ export function CmvBloco({ state, onChange }: CmvBlocoProps) {
               {rotulo} {statusLabel[statusVsIdeal]} ({formatarPercentual(toNumber(state.cmvIdeal))})
             </p>
           )}
-          <div className="flex flex-wrap gap-2 border-t pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => exportarCsv(linhasExportacao, 'simulacao-cmv.csv')}
-            >
-              Exportar CSV
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => exportarXlsx(linhasExportacao, 'simulacao-cmv.xlsx')}
-            >
-              Exportar XLSX
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => exportarPdf(linhasExportacao, 'simulacao-cmv.pdf', `Simulação de ${rotulo}`)}
-            >
-              Exportar PDF
-            </Button>
+          <div className="border-t pt-4">
+            <ExportMenu
+              linhas={linhasExportacao}
+              nomeBase="simulacao-cmv"
+              titulo={`Simulação de ${rotulo}`}
+            />
           </div>
         </CardContent>
       </Card>

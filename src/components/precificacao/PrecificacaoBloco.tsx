@@ -1,7 +1,9 @@
 import type { ReactNode } from 'react'
 import { useMemo } from 'react'
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { ExportMenu } from '@/components/ui/export-menu'
 import { FloatingLabelInput } from '@/components/ui/floating-label-input'
 import { InfoBubble } from '@/components/ui/info-bubble'
 import {
@@ -14,7 +16,9 @@ import {
   toNumber,
   type PrecificacaoResultado,
 } from '@/lib/calculos'
-import { exportarCsv, exportarPdf, exportarXlsx, type LinhaExportacao } from '@/lib/exportar'
+import { precificacaoInicial } from '@/lib/estados-iniciais'
+import { precificacaoExemplo } from '@/lib/exemplos'
+import type { LinhaExportacao } from '@/lib/exportar'
 
 export interface PrecificacaoFormState {
   custo: string
@@ -188,63 +192,14 @@ export function PrecificacaoBloco({ state, onChange, onEditCampoHerdado }: Preci
 
   return (
     <div className="grid gap-4">
-      <Card>
-        <CardHeader>
-          <CardTitle>Resumo</CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-4">
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-            <Estatistica label="Preço Final" valor={formatarReais(resultado.preco)} />
-            <Estatistica label="Custo" valor={formatarReais(toNumber(state.custo))} />
-            <Estatistica label="Lucro (R$)" valor={formatarReais(resultado.composicao.margemLucro.reais)} />
-            <Estatistica
-              label="Margem sobre o preço"
-              valor={formatarPercentual(resultado.composicao.margemLucro.percentual)}
-            />
-            <Estatistica
-              label="Taxa de Custo"
-              valor={formatarPercentual(100 - resultado.composicao.margemLucro.percentual)}
-            />
-            <Estatistica
-              label="Índice de Markup"
-              valor={resultado.indiceMarkup.toLocaleString('pt-BR', { maximumFractionDigits: 2 })}
-            />
-            <Estatistica
-              label="Margem de Contribuição"
-              valor={formatarPercentual(resultado.margemContribuicaoPercentual)}
-              info="(Preço − Custo Variável Total) ÷ Preço. É o que sobra da venda pra pagar despesas fixas e gerar lucro — não confundir com o Índice de Markup, que é só o multiplicador sobre o custo."
-            />
-          </div>
-          <div className="flex flex-wrap gap-2 border-t pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => exportarCsv(linhasExportacao, 'simulacao-precificacao.csv')}
-            >
-              Exportar CSV
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => exportarXlsx(linhasExportacao, 'simulacao-precificacao.xlsx')}
-            >
-              Exportar XLSX
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() =>
-                exportarPdf(linhasExportacao, 'simulacao-precificacao.pdf', 'Simulação de Precificação')
-              }
-            >
-              Exportar PDF
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="flex flex-wrap gap-2">
+        <Button type="button" variant="outline" size="sm" onClick={() => onChange(precificacaoExemplo)}>
+          Ver exemplo
+        </Button>
+        <Button type="button" variant="ghost" size="sm" onClick={() => onChange(precificacaoInicial)}>
+          Limpar
+        </Button>
+      </div>
 
       <div className="grid gap-4 md:grid-cols-2">
         <Card>
@@ -254,7 +209,8 @@ export function PrecificacaoBloco({ state, onChange, onEditCampoHerdado }: Preci
           <CardContent className="grid gap-4">
             <FloatingLabelInput
               id="precificacao-custo"
-              label="Custo Unitário (R$) — herdado do Markup, editável"
+              label="Custo Unitário — herdado do Markup, editável"
+              unidade="R$"
               inputMode="decimal"
               value={state.custo}
               onChange={setCampoHerdado('custo')}
@@ -265,8 +221,10 @@ export function PrecificacaoBloco({ state, onChange, onEditCampoHerdado }: Preci
             >
               <FloatingLabelInput
                 id="precificacao-df"
-                label="Despesas Fixas — DF (%)"
+                label="Despesas Fixas — DF"
+                unidade="%"
                 inputMode="decimal"
+                aria-invalid={percentuaisInvalidos}
                 value={state.despesasFixas}
                 onChange={setField('despesasFixas')}
               />
@@ -277,8 +235,10 @@ export function PrecificacaoBloco({ state, onChange, onEditCampoHerdado }: Preci
             >
               <FloatingLabelInput
                 id="precificacao-dv"
-                label="Despesas Variáveis — DV (%)"
+                label="Despesas Variáveis — DV"
+                unidade="%"
                 inputMode="decimal"
+                aria-invalid={percentuaisInvalidos}
                 value={state.despesasVariaveis}
                 onChange={setField('despesasVariaveis')}
               />
@@ -289,8 +249,10 @@ export function PrecificacaoBloco({ state, onChange, onEditCampoHerdado }: Preci
             >
               <FloatingLabelInput
                 id="precificacao-ml"
-                label="Margem de Lucro — ML (%) — herdada do Markup, editável"
+                label="Margem de Lucro — ML — herdada do Markup, editável"
+                unidade="%"
                 inputMode="decimal"
+                aria-invalid={percentuaisInvalidos}
                 value={state.margemLucro}
                 onChange={setCampoHerdado('margemLucro')}
               />
@@ -301,8 +263,10 @@ export function PrecificacaoBloco({ state, onChange, onEditCampoHerdado }: Preci
             >
               <FloatingLabelInput
                 id="precificacao-taxa-canal"
-                label="Taxa de canal de venda (%)"
+                label="Taxa de canal de venda"
+                unidade="%"
                 inputMode="decimal"
+                aria-invalid={percentuaisInvalidos}
                 value={state.taxaCanal}
                 onChange={setField('taxaCanal')}
               />
@@ -340,90 +304,143 @@ export function PrecificacaoBloco({ state, onChange, onEditCampoHerdado }: Preci
 
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-1.5">
-            Modo reverso
-            <InfoBubble label="Como funciona o modo reverso">
-              Em vez de partir do custo pra achar o preço, você informa o preço que o mercado aceita e
-              o sistema devolve a margem de contribuição resultante — útil pra checar se um preço já
-              praticado faz sentido.
-            </InfoBubble>
-          </CardTitle>
+          <CardTitle>Resumo</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-4">
-          <FloatingLabelInput
-            id="precificacao-preco-desejado"
-            label="Preço de venda desejado (R$)"
-            inputMode="decimal"
-            value={state.precoDesejado}
-            onChange={setField('precoDesejado')}
-          />
-          {modoReverso && (
-            <div>
-              <p className="text-muted-foreground text-sm">Margem de Contribuição resultante</p>
-              <p className="text-2xl font-semibold">
-                {formatarPercentual(modoReverso.margemContribuicaoPercentual)} (
-                {formatarReais(modoReverso.margemContribuicaoReais)})
-              </p>
-            </div>
-          )}
-
-          <FloatingLabelInput
-            id="precificacao-lucro-desejado"
-            label="Lucro desejado (R$) — opcional, pra calcular o Custo-meta"
-            inputMode="decimal"
-            value={state.lucroDesejado}
-            onChange={setField('lucroDesejado')}
-          />
-          {custoMeta !== null && (
-            <div>
-              <p className="text-muted-foreground flex items-center gap-1 text-sm">
-                Custo-meta — custo máximo pra manter esse lucro nesse preço
-                <InfoBubble label="O que é Custo-meta">
-                  Custo-meta = Preço de venda − Lucro desejado. Em vez de calcular o preço a partir do
-                  custo (cost-plus), parte do preço que o mercado aceita pra achar o custo máximo que
-                  ainda permite o lucro que você quer (target costing).
-                </InfoBubble>
-              </p>
-              <p className="text-2xl font-semibold">{formatarReais(custoMeta)}</p>
-            </div>
-          )}
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+            <Estatistica label="Preço Final" valor={formatarReais(resultado.preco)} />
+            <Estatistica label="Custo" valor={formatarReais(toNumber(state.custo))} />
+            <Estatistica label="Lucro (R$)" valor={formatarReais(resultado.composicao.margemLucro.reais)} />
+            <Estatistica
+              label="Margem de Lucro"
+              valor={formatarPercentual(resultado.composicao.margemLucro.percentual)}
+            />
+            <Estatistica
+              label="Taxa de Custo"
+              valor={formatarPercentual(100 - resultado.composicao.margemLucro.percentual)}
+              info="100% − Margem de Lucro. É a fatia do preço que vai pra custo, despesas e taxas, sobrando só o lucro."
+            />
+            <Estatistica
+              label="Índice de Markup"
+              valor={resultado.indiceMarkup.toLocaleString('pt-BR', { maximumFractionDigits: 2 })}
+            />
+            <Estatistica
+              label="Margem de Contribuição"
+              valor={formatarPercentual(resultado.margemContribuicaoPercentual)}
+              info="(Preço − Custo Variável Total) ÷ Preço. É o que sobra da venda pra pagar despesas fixas e gerar lucro — não confundir com o Índice de Markup, que é só o multiplicador sobre o custo."
+            />
+          </div>
+          <div className="border-t pt-4">
+            <ExportMenu
+              linhas={linhasExportacao}
+              nomeBase="simulacao-precificacao"
+              titulo="Simulação de Precificação"
+            />
+          </div>
         </CardContent>
       </Card>
 
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-1.5">
-            Ponto de Equilíbrio
-            <InfoBubble label="O que é Ponto de Equilíbrio">
-              Quanto você precisa vender (em R$ ou em unidades) pra cobrir exatamente as despesas
-              fixas totais — abaixo disso dá prejuízo, acima começa o lucro.
-            </InfoBubble>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-4">
-          <FloatingLabelInput
-            id="precificacao-despesas-fixas-totais"
-            label="Despesas Fixas Totais (R$/mês) — opcional"
-            inputMode="decimal"
-            value={state.despesasFixasTotais}
-            onChange={setField('despesasFixasTotais')}
-          />
-          <p className="text-muted-foreground text-xs">
-            Valor absoluto (aluguel, salários etc.), diferente do DF% acima — esse é usado só pra
-            calcular quanto precisa vender pra não ter prejuízo.
-          </p>
-          {pontoEquilibrio && (
-            <div>
-              <p className="text-muted-foreground text-sm">Quanto precisa vender pra zerar o prejuízo</p>
-              <p className="text-2xl font-semibold">
-                {formatarReais(pontoEquilibrio.pontoEquilibrioReais)} (
-                {pontoEquilibrio.pontoEquilibrioUnidades.toLocaleString('pt-BR', {
-                  maximumFractionDigits: 1,
-                })}{' '}
-                unidades)
-              </p>
-            </div>
-          )}
+        <CardContent>
+          <Accordion type="multiple">
+            <AccordionItem value="modo-reverso">
+              <AccordionTrigger>
+                <span className="flex items-center gap-1.5">
+                  Modo reverso
+                  <InfoBubble label="Como funciona o modo reverso">
+                    Em vez de partir do custo pra achar o preço, você informa o preço que o mercado
+                    aceita e o sistema devolve a margem de contribuição resultante — útil pra checar se
+                    um preço já praticado faz sentido.
+                  </InfoBubble>
+                </span>
+              </AccordionTrigger>
+              <AccordionContent>
+                <div className="grid gap-4">
+                  <FloatingLabelInput
+                    id="precificacao-preco-desejado"
+                    label="Preço de venda desejado"
+                    unidade="R$"
+                    inputMode="decimal"
+                    value={state.precoDesejado}
+                    onChange={setField('precoDesejado')}
+                  />
+                  {modoReverso && (
+                    <div>
+                      <p className="text-muted-foreground text-sm">Margem de Contribuição resultante</p>
+                      <p className="text-2xl font-semibold">
+                        {formatarPercentual(modoReverso.margemContribuicaoPercentual)} (
+                        {formatarReais(modoReverso.margemContribuicaoReais)})
+                      </p>
+                    </div>
+                  )}
+
+                  <FloatingLabelInput
+                    id="precificacao-lucro-desejado"
+                    label="Lucro desejado — opcional, pra calcular o Custo-meta"
+                    unidade="R$"
+                    inputMode="decimal"
+                    value={state.lucroDesejado}
+                    onChange={setField('lucroDesejado')}
+                  />
+                  {custoMeta !== null && (
+                    <div>
+                      <p className="text-muted-foreground flex items-center gap-1 text-sm">
+                        Custo-meta — custo máximo pra manter esse lucro nesse preço
+                        <InfoBubble label="O que é Custo-meta">
+                          Custo-meta = Preço de venda − Lucro desejado. Em vez de calcular o preço a
+                          partir do custo (cost-plus), parte do preço que o mercado aceita pra achar o
+                          custo máximo que ainda permite o lucro que você quer (target costing).
+                        </InfoBubble>
+                      </p>
+                      <p className="text-2xl font-semibold">{formatarReais(custoMeta)}</p>
+                    </div>
+                  )}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="ponto-equilibrio">
+              <AccordionTrigger>
+                <span className="flex items-center gap-1.5">
+                  Ponto de Equilíbrio
+                  <InfoBubble label="O que é Ponto de Equilíbrio">
+                    Quanto você precisa vender (em R$ ou em unidades) pra cobrir exatamente as despesas
+                    fixas totais — abaixo disso dá prejuízo, acima começa o lucro.
+                  </InfoBubble>
+                </span>
+              </AccordionTrigger>
+              <AccordionContent>
+                <div className="grid gap-4">
+                  <FloatingLabelInput
+                    id="precificacao-despesas-fixas-totais"
+                    label="Despesas Fixas Totais (por mês) — opcional"
+                    unidade="R$"
+                    inputMode="decimal"
+                    value={state.despesasFixasTotais}
+                    onChange={setField('despesasFixasTotais')}
+                  />
+                  <p className="text-muted-foreground text-xs">
+                    Valor absoluto (aluguel, salários etc.), diferente do DF% acima — esse é usado só
+                    pra calcular quanto precisa vender pra não ter prejuízo.
+                  </p>
+                  {pontoEquilibrio && (
+                    <div>
+                      <p className="text-muted-foreground text-sm">
+                        Quanto precisa vender pra zerar o prejuízo
+                      </p>
+                      <p className="text-2xl font-semibold">
+                        {formatarReais(pontoEquilibrio.pontoEquilibrioReais)} (
+                        {pontoEquilibrio.pontoEquilibrioUnidades.toLocaleString('pt-BR', {
+                          maximumFractionDigits: 1,
+                        })}{' '}
+                        unidades)
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
         </CardContent>
       </Card>
     </div>

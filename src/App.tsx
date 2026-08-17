@@ -1,52 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { CmvBloco, type CmvFormState } from '@/components/cmv/CmvBloco'
-import { MarkupBloco, type MarkupFormState } from '@/components/markup/MarkupBloco'
-import {
-  PrecificacaoBloco,
-  type PrecificacaoFormState,
-} from '@/components/precificacao/PrecificacaoBloco'
+import { CmvBloco } from '@/components/cmv/CmvBloco'
+import { MarkupBloco } from '@/components/markup/MarkupBloco'
+import { PrecificacaoBloco } from '@/components/precificacao/PrecificacaoBloco'
 import { calcularMarkup, toNumber } from '@/lib/calculos'
-
-const cmvInicial: CmvFormState = {
-  modo: 'revenda',
-  estoqueInicial: '',
-  compras: '',
-  estoqueFinal: '',
-  receitaBruta: '',
-  cmvIdeal: '',
-  mpEstoqueInicial: '',
-  mpCompras: '',
-  mpEstoqueFinal: '',
-  maoDeObraDireta: '',
-  custosIndiretosFabricacao: '',
-  peEstoqueInicial: '',
-  peEstoqueFinal: '',
-  paEstoqueInicial: '',
-  paEstoqueFinal: '',
-}
-
-const markupInicial: MarkupFormState = {
-  modo: 'markup',
-  custoUnitario: '',
-  indiceMarkup: '',
-  margemLucro: '',
-  custoUnitarioModo: 'direto',
-  valorCompra: '',
-  quantidadeComprada: '',
-  unidadeCompra: '',
-}
-
-const precificacaoInicial: PrecificacaoFormState = {
-  custo: '',
-  despesasFixas: '',
-  despesasVariaveis: '',
-  margemLucro: '',
-  taxaCanal: '',
-  precoDesejado: '',
-  despesasFixasTotais: '',
-  lucroDesejado: '',
-}
+import { cmvInicial, markupInicial, precificacaoInicial } from '@/lib/estados-iniciais'
 
 function App() {
   const [cmv, setCmv] = useState(cmvInicial)
@@ -81,6 +39,9 @@ function App() {
       <header>
         <h1 className="text-2xl font-semibold">Simulador Financeiro</h1>
         <p className="text-muted-foreground text-sm">CMV e Precificação — cálculo em tempo real.</p>
+        <p className="text-muted-foreground mt-1 text-xs">
+          Nada aqui é salvo — atualizar a página reseta os campos.
+        </p>
       </header>
 
       <Tabs defaultValue="cmv">

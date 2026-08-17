@@ -1,4 +1,5 @@
 import { useEffect, useMemo, type Dispatch, type SetStateAction } from 'react'
+import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { FloatingLabelInput } from '@/components/ui/floating-label-input'
 import { InfoBubble } from '@/components/ui/info-bubble'
@@ -11,6 +12,8 @@ import {
   toNumber,
   type ModoMarkup,
 } from '@/lib/calculos'
+import { markupInicial } from '@/lib/estados-iniciais'
+import { markupExemplo } from '@/lib/exemplos'
 
 export type ModoCustoUnitario = 'direto' | 'conversao'
 
@@ -59,6 +62,8 @@ export function MarkupBloco({ state, onChange }: MarkupBlocoProps) {
     [state],
   )
 
+  const margemInvalida = state.modo === 'margem' && toNumber(state.margemLucro) >= 100
+
   function setModo(modo: ModoMarkup) {
     onChange({ ...state, modo })
   }
@@ -88,6 +93,15 @@ export function MarkupBloco({ state, onChange }: MarkupBlocoProps) {
           </CardTitle>
         </CardHeader>
         <CardContent className="grid gap-4">
+          <div className="flex flex-wrap gap-2">
+            <Button type="button" variant="outline" size="sm" onClick={() => onChange(markupExemplo)}>
+              Ver exemplo
+            </Button>
+            <Button type="button" variant="ghost" size="sm" onClick={() => onChange(markupInicial)}>
+              Limpar
+            </Button>
+          </div>
+
           <SegmentedToggle
             ariaLabel="Como informar o custo unitário"
             value={state.custoUnitarioModo}
@@ -101,7 +115,8 @@ export function MarkupBloco({ state, onChange }: MarkupBlocoProps) {
           {state.custoUnitarioModo === 'direto' ? (
             <FloatingLabelInput
               id="markup-custo-unitario"
-              label="Custo Unitário (R$)"
+              label="Custo Unitário"
+              unidade="R$"
               inputMode="decimal"
               value={state.custoUnitario}
               onChange={setField('custoUnitario')}
@@ -111,7 +126,8 @@ export function MarkupBloco({ state, onChange }: MarkupBlocoProps) {
               <div className="grid grid-cols-2 gap-4">
                 <FloatingLabelInput
                   id="markup-valor-compra"
-                  label="Valor de Compra (R$)"
+                  label="Valor de Compra"
+                  unidade="R$"
                   inputMode="decimal"
                   value={state.valorCompra}
                   onChange={setField('valorCompra')}
@@ -158,14 +174,16 @@ export function MarkupBloco({ state, onChange }: MarkupBlocoProps) {
           ) : (
             <FloatingLabelInput
               id="markup-margem"
-              label="Margem de Lucro desejada — sobre o preço (%)"
+              label="Margem de Lucro desejada — sobre o preço"
+              unidade="%"
               inputMode="decimal"
+              aria-invalid={margemInvalida}
               value={state.margemLucro}
               onChange={setField('margemLucro')}
             />
           )}
 
-          {state.modo === 'margem' && toNumber(state.margemLucro) >= 100 && (
+          {margemInvalida && (
             <p className="text-destructive text-xs font-medium">
               Margem inválida: precisa ser menor que 100% (senão o preço fica negativo ou infinito).
             </p>
@@ -202,7 +220,7 @@ export function MarkupBloco({ state, onChange }: MarkupBlocoProps) {
               </p>
             </div>
             <div>
-              <p className="text-muted-foreground text-sm">Margem sobre o preço</p>
+              <p className="text-muted-foreground text-sm">Margem de Lucro</p>
               <p className="text-lg font-medium">
                 {formatarPercentual(resultado.margemSobrePrecoPercentual)}
               </p>

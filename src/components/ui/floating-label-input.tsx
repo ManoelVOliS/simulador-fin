@@ -30,16 +30,26 @@ const FloatingLabel = React.forwardRef<
 });
 FloatingLabel.displayName = 'FloatingLabel';
 
-type FloatingLabelInputProps = InputProps & { label?: string };
+type FloatingLabelInputProps = InputProps & { label?: string; unidade?: string };
 
 const FloatingLabelInput = React.forwardRef<
   React.ElementRef<typeof FloatingInput>,
   React.PropsWithoutRef<FloatingLabelInputProps>
->(({ id, label, ...props }, ref) => {
+>(({ id, label, unidade, className, ...props }, ref) => {
   return (
     <div className="relative">
-      <FloatingInput ref={ref} id={id} {...props} />
+      <FloatingInput
+        ref={ref}
+        id={id}
+        className={cn(unidade && 'pr-10', className)}
+        {...props}
+      />
       <FloatingLabel htmlFor={id}>{label}</FloatingLabel>
+      {unidade && (
+        <span className="text-muted-foreground pointer-events-none absolute inset-y-0 right-3 flex items-center text-sm">
+          {unidade}
+        </span>
+      )}
     </div>
   );
 });
