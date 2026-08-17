@@ -34,7 +34,11 @@ export const markupInicial: MarkupFormState = {
 export const precificacaoInicial: PrecificacaoFormState = {
   custo: '',
   despesasFixas: '',
+  despesasFixasModo: 'direto',
+  despesasFixasItens: [],
   despesasVariaveis: '',
+  despesasVariaveisModo: 'direto',
+  despesasVariaveisItens: [],
   margemLucro: '',
   taxaCanal: '',
   precoDesejado: '',

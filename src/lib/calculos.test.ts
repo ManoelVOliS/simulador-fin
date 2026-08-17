@@ -9,6 +9,7 @@ import {
   calcularModoReverso,
   calcularPontoEquilibrio,
   calcularPrecificacao,
+  somarPercentuaisItens,
   toNumber,
 } from './calculos'
 
@@ -226,5 +227,19 @@ describe('calcularModoReverso', () => {
 describe('calcularCustoMeta', () => {
   it('custo-meta = preço desejado − lucro desejado', () => {
     expect(calcularCustoMeta(100, 30)).toBe(70)
+  })
+})
+
+describe('somarPercentuaisItens', () => {
+  it('soma os percentuais de vários itens', () => {
+    expect(somarPercentuaisItens([{ percentual: 8 }, { percentual: 7 }])).toBe(15)
+  })
+
+  it('retorna 0 pra lista vazia', () => {
+    expect(somarPercentuaisItens([])).toBe(0)
+  })
+
+  it('funciona com um item só', () => {
+    expect(somarPercentuaisItens([{ percentual: 12.5 }])).toBe(12.5)
   })
 })

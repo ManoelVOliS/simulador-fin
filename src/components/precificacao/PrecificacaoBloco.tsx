@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ExportMenu } from '@/components/ui/export-menu'
 import { FloatingLabelInput } from '@/components/ui/floating-label-input'
 import { InfoBubble } from '@/components/ui/info-bubble'
+import { CampoComItens, type ItemFormState, type ModoCampoComItens } from '@/components/precificacao/CampoComItens'
 import {
   calcularCustoMeta,
   calcularModoReverso,
@@ -13,6 +14,7 @@ import {
   calcularPrecificacao,
   formatarPercentual,
   formatarReais,
+  somarPercentuaisItens,
   toNumber,
   type PrecificacaoResultado,
 } from '@/lib/calculos'
@@ -23,12 +25,22 @@ import type { LinhaExportacao } from '@/lib/exportar'
 export interface PrecificacaoFormState {
   custo: string
   despesasFixas: string
+  despesasFixasModo: ModoCampoComItens
+  despesasFixasItens: ItemFormState[]
   despesasVariaveis: string
+  despesasVariaveisModo: ModoCampoComItens
+  despesasVariaveisItens: ItemFormState[]
   margemLucro: string
   taxaCanal: string
   precoDesejado: string
   despesasFixasTotais: string
   lucroDesejado: string
+}
+
+function totalDoModo(modo: ModoCampoComItens, valorDireto: string, itens: ItemFormState[]): number {
+  return modo === 'itens'
+    ? somarPercentuaisItens(itens.map((item) => ({ percentual: toNumber(item.percentual) })))
+    : toNumber(valorDireto)
 }
 
 interface PrecificacaoBlocoProps {
@@ -72,11 +84,31 @@ function montarLinhasExportacao(
   modoReverso: ReturnType<typeof calcularModoReverso> | null,
   pontoEquilibrio: ReturnType<typeof calcularPontoEquilibrio> | null,
   custoMeta: number | null,
+  despesasFixasTotal: number,
+  despesasVariaveisTotal: number,
 ): LinhaExportacao[] {
-  const linhas: LinhaExportacao[] = [
-    { campo: 'Custo Unitário', valor: formatarReais(toNumber(state.custo)) },
-    { campo: 'Despesas Fixas (%)', valor: formatarPercentual(toNumber(state.despesasFixas)) },
-    { campo: 'Despesas Variáveis (%)', valor: formatarPercentual(toNumber(state.despesasVariaveis)) },
+  const linhas: LinhaExportacao[] = [{ campo: 'Custo Unitário', valor: formatarReais(toNumber(state.custo)) }]
+
+  if (state.despesasFixasModo === 'itens') {
+    state.despesasFixasItens.forEach((item) => {
+      linhas.push({
+        campo: `Despesas Fixas — ${item.nome || 'item'} (%)`,
+        valor: formatarPercentual(toNumber(item.percentual)),
+      })
+    })
+  }
+  linhas.push({ campo: 'Despesas Fixas — Total (%)', valor: formatarPercentual(despesasFixasTotal) })
+
+  if (state.despesasVariaveisModo === 'itens') {
+    state.despesasVariaveisItens.forEach((item) => {
+      linhas.push({
+        campo: `Despesas Variáveis — ${item.nome || 'item'} (%)`,
+        valor: formatarPercentual(toNumber(item.percentual)),
+      })
+    })
+  }
+  linhas.push(
+    { campo: 'Despesas Variáveis — Total (%)', valor: formatarPercentual(despesasVariaveisTotal) },
     { campo: 'Margem de Lucro (%)', valor: formatarPercentual(toNumber(state.margemLucro)) },
     { campo: 'Taxa de canal (%)', valor: formatarPercentual(toNumber(state.taxaCanal)) },
     { campo: 'Preço Final', valor: formatarReais(resultado.preco) },
@@ -93,7 +125,7 @@ function montarLinhasExportacao(
       campo: 'Taxa de Custo (%)',
       valor: formatarPercentual(100 - resultado.composicao.margemLucro.percentual),
     },
-  ]
+  )
 
   if (modoReverso) {
     linhas.push(
@@ -129,16 +161,23 @@ function montarLinhasExportacao(
 }
 
 export function PrecificacaoBloco({ state, onChange, onEditCampoHerdado }: PrecificacaoBlocoProps) {
+  const despesasFixasTotal = totalDoModo(state.despesasFixasModo, state.despesasFixas, state.despesasFixasItens)
+  const despesasVariaveisTotal = totalDoModo(
+    state.despesasVariaveisModo,
+    state.despesasVariaveis,
+    state.despesasVariaveisItens,
+  )
+
   const resultado = useMemo(
     () =>
       calcularPrecificacao({
         custo: toNumber(state.custo),
-        despesasFixas: toNumber(state.despesasFixas),
-        despesasVariaveis: toNumber(state.despesasVariaveis),
+        despesasFixas: despesasFixasTotal,
+        despesasVariaveis: despesasVariaveisTotal,
         margemLucro: toNumber(state.margemLucro),
         taxaCanal: toNumber(state.taxaCanal),
       }),
-    [state],
+    [state.custo, despesasFixasTotal, despesasVariaveisTotal, state.margemLucro, state.taxaCanal],
   )
 
   const modoReverso = useMemo(() => {
@@ -146,10 +185,10 @@ export function PrecificacaoBloco({ state, onChange, onEditCampoHerdado }: Preci
     return calcularModoReverso({
       precoDesejado: toNumber(state.precoDesejado),
       custo: toNumber(state.custo),
-      despesasVariaveis: toNumber(state.despesasVariaveis),
+      despesasVariaveis: despesasVariaveisTotal,
       taxaCanal: toNumber(state.taxaCanal),
     })
-  }, [state.precoDesejado, state.custo, state.despesasVariaveis, state.taxaCanal])
+  }, [state.precoDesejado, state.custo, despesasVariaveisTotal, state.taxaCanal])
 
   const pontoEquilibrio = useMemo(() => {
     if (!state.despesasFixasTotais) return null
@@ -166,15 +205,21 @@ export function PrecificacaoBloco({ state, onChange, onEditCampoHerdado }: Preci
   }, [state.precoDesejado, state.lucroDesejado])
 
   const linhasExportacao = useMemo(
-    () => montarLinhasExportacao(state, resultado, modoReverso, pontoEquilibrio, custoMeta),
-    [state, resultado, modoReverso, pontoEquilibrio, custoMeta],
+    () =>
+      montarLinhasExportacao(
+        state,
+        resultado,
+        modoReverso,
+        pontoEquilibrio,
+        custoMeta,
+        despesasFixasTotal,
+        despesasVariaveisTotal,
+      ),
+    [state, resultado, modoReverso, pontoEquilibrio, custoMeta, despesasFixasTotal, despesasVariaveisTotal],
   )
 
   const somaPercentuais =
-    toNumber(state.despesasFixas) +
-    toNumber(state.despesasVariaveis) +
-    toNumber(state.margemLucro) +
-    toNumber(state.taxaCanal)
+    despesasFixasTotal + despesasVariaveisTotal + toNumber(state.margemLucro) + toNumber(state.taxaCanal)
   const percentuaisInvalidos = somaPercentuais >= 100
 
   function setCampoHerdado(field: 'custo' | 'margemLucro') {
@@ -217,34 +262,30 @@ export function PrecificacaoBloco({ state, onChange, onEditCampoHerdado }: Preci
                 onChange={setCampoHerdado('custo')}
               />
             </CampoComInfo>
-            <CampoComInfo
-              label="Despesas Fixas"
+            <CampoComItens
+              idPrefix="precificacao-df"
+              label="Despesas Fixas — DF"
               info="Custos que não mudam com o volume de vendas (aluguel, salários fixos etc.), como % do preço de venda — não confundir com o valor absoluto usado no Ponto de Equilíbrio, mais abaixo."
-            >
-              <FloatingLabelInput
-                id="precificacao-df"
-                label="Despesas Fixas — DF"
-                unidade="%"
-                inputMode="decimal"
-                aria-invalid={percentuaisInvalidos}
-                value={state.despesasFixas}
-                onChange={setField('despesasFixas')}
-              />
-            </CampoComInfo>
-            <CampoComInfo
-              label="Despesas Variáveis"
+              modo={state.despesasFixasModo}
+              onModoChange={(despesasFixasModo) => onChange({ ...state, despesasFixasModo })}
+              valorDireto={state.despesasFixas}
+              onValorDiretoChange={(despesasFixas) => onChange({ ...state, despesasFixas })}
+              itens={state.despesasFixasItens}
+              onItensChange={(despesasFixasItens) => onChange({ ...state, despesasFixasItens })}
+              invalido={percentuaisInvalidos}
+            />
+            <CampoComItens
+              idPrefix="precificacao-dv"
+              label="Despesas Variáveis — DV"
               info="Custos que variam junto com a venda (comissão, embalagem, impostos sobre venda etc.), como % do preço."
-            >
-              <FloatingLabelInput
-                id="precificacao-dv"
-                label="Despesas Variáveis — DV"
-                unidade="%"
-                inputMode="decimal"
-                aria-invalid={percentuaisInvalidos}
-                value={state.despesasVariaveis}
-                onChange={setField('despesasVariaveis')}
-              />
-            </CampoComInfo>
+              modo={state.despesasVariaveisModo}
+              onModoChange={(despesasVariaveisModo) => onChange({ ...state, despesasVariaveisModo })}
+              valorDireto={state.despesasVariaveis}
+              onValorDiretoChange={(despesasVariaveis) => onChange({ ...state, despesasVariaveis })}
+              itens={state.despesasVariaveisItens}
+              onItensChange={(despesasVariaveisItens) => onChange({ ...state, despesasVariaveisItens })}
+              invalido={percentuaisInvalidos}
+            />
             <CampoComInfo
               label="Margem de Lucro"
               info="Quanto de lucro você quer que sobre, como % do preço de venda final (não do custo). Vem do bloco Markup automaticamente — pode editar aqui se quiser."

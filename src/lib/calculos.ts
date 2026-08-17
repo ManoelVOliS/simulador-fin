@@ -156,6 +156,16 @@ export function calcularMarkup({
   return { indiceMarkup, margemSobrePrecoPercentual, precoSugerido }
 }
 
+export interface ItemDespesa {
+  id: string
+  nome: string
+  percentual: number
+}
+
+export function somarPercentuaisItens(itens: { percentual: number }[]): number {
+  return itens.reduce((total, item) => total + item.percentual, 0)
+}
+
 export interface PrecificacaoInput {
   custo: number
   despesasFixas: number

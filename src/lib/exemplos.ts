@@ -50,7 +50,14 @@ export const markupExemplo: MarkupFormState = {
 export const precificacaoExemplo: PrecificacaoFormState = {
   custo: '12',
   despesasFixas: '15',
+  despesasFixasModo: 'itens',
+  despesasFixasItens: [
+    { id: 'exemplo-df-1', nome: 'Aluguel', percentual: '8' },
+    { id: 'exemplo-df-2', nome: 'Salários', percentual: '7' },
+  ],
   despesasVariaveis: '8',
+  despesasVariaveisModo: 'direto',
+  despesasVariaveisItens: [],
   margemLucro: '20',
   taxaCanal: '5',
   precoDesejado: '35',

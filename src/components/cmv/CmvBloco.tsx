@@ -334,14 +334,26 @@ export function CmvBloco({ state, onChange }: CmvBlocoProps) {
             value={state.receitaBruta}
             onChange={setField('receitaBruta')}
           />
-          <FloatingLabelInput
-            id="cmv-ideal"
-            label={`${rotulo} ideal — opcional`}
-            unidade="%"
-            inputMode="decimal"
-            value={state.cmvIdeal}
-            onChange={setField('cmvIdeal')}
-          />
+          <div className="flex items-center gap-2">
+            <div className="flex-1">
+              <FloatingLabelInput
+                id="cmv-ideal"
+                label={`${rotulo} ideal — opcional`}
+                unidade="%"
+                inputMode="decimal"
+                value={state.cmvIdeal}
+                onChange={setField('cmvIdeal')}
+              />
+            </div>
+            <InfoBubble label={`O que é ${rotulo} ideal`}>
+              Uma meta que <strong>você</strong> define — não é uma faixa fixa de mercado, cada negócio
+              tem a sua (ex.: com base no seu histórico ou no que o plano de negócio previa). O sistema
+              compara o {rotulo}% calculado com essa meta e mostra: <strong>acima da meta</strong> = seu
+              custo ficou maior que o esperado (ruim); <strong>dentro da meta</strong> = bateu certinho;{' '}
+              <strong>abaixo da meta</strong> = seu custo ficou menor que o esperado (bom sinal, sobra
+              mais margem). Deixe em branco se não tiver uma meta definida.
+            </InfoBubble>
+          </div>
         </CardContent>
       </Card>
 
