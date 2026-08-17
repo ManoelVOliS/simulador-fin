@@ -207,14 +207,16 @@ export function PrecificacaoBloco({ state, onChange, onEditCampoHerdado }: Preci
             <CardTitle>Composição</CardTitle>
           </CardHeader>
           <CardContent className="grid gap-4">
-            <FloatingLabelInput
-              id="precificacao-custo"
-              label="Custo Unitário — herdado do Markup, editável"
-              unidade="R$"
-              inputMode="decimal"
-              value={state.custo}
-              onChange={setCampoHerdado('custo')}
-            />
+            <CampoComInfo label="Custo Unitário" info="Vem do bloco Markup automaticamente — pode editar aqui se quiser.">
+              <FloatingLabelInput
+                id="precificacao-custo"
+                label="Custo Unitário"
+                unidade="R$"
+                inputMode="decimal"
+                value={state.custo}
+                onChange={setCampoHerdado('custo')}
+              />
+            </CampoComInfo>
             <CampoComInfo
               label="Despesas Fixas"
               info="Custos que não mudam com o volume de vendas (aluguel, salários fixos etc.), como % do preço de venda — não confundir com o valor absoluto usado no Ponto de Equilíbrio, mais abaixo."
@@ -245,11 +247,11 @@ export function PrecificacaoBloco({ state, onChange, onEditCampoHerdado }: Preci
             </CampoComInfo>
             <CampoComInfo
               label="Margem de Lucro"
-              info="Quanto de lucro você quer que sobre, como % do preço de venda final (não do custo)."
+              info="Quanto de lucro você quer que sobre, como % do preço de venda final (não do custo). Vem do bloco Markup automaticamente — pode editar aqui se quiser."
             >
               <FloatingLabelInput
                 id="precificacao-ml"
-                label="Margem de Lucro — ML — herdada do Markup, editável"
+                label="Margem de Lucro — ML"
                 unidade="%"
                 inputMode="decimal"
                 aria-invalid={percentuaisInvalidos}

@@ -4,6 +4,10 @@
 
 Critério de corte: tudo que exige cadastro reutilizável (ingrediente, receita salva) ou IA fica em **v1 — fora de escopo por enquanto**, conforme decisão do usuário de continuar sem persistência até validar o nível de uso / viabilidade comercial. As tasks "Agora" cabem na arquitetura atual (client-side, sem estado salvo, `useState` local).
 
+## Decisão de público-alvo: revenda *e* produção
+
+O PRD v0 original mirava só empresa comercial ("compra pronto e revende"). A T8 (modo Produção no CMV/CPV) foi uma **expansão consciente de escopo**, não um crescimento orgânico incidental — decidida explicitamente durante a conversa que pediu "adicionar matéria-prima" ao CMV. Isso muda quem é o cliente ideal do produto: além de quem revende mercadoria, agora também serve quem **transforma matéria-prima em produto** (indústria, produção artesanal, etc.), com custeio de 3 estágios (MP → Custo de Produção → CPV, incluindo Mão de Obra Direta e Custos Indiretos de Fabricação). Vale ter isso em mente em decisões futuras de copy/marketing — o público não é só "quem revende".
+
 ## Agora (v0 — sem persistência)
 
 - [x] **T1 — Custo unitário por conversão automática**: no bloco Precificação, ao lado do campo "Custo Unitário (R$)", adicionar um modo alternativo de preenchimento: `Valor de Compra (R$) + Quantidade Comprada + Unidade` → calcula o custo unitário automaticamente (ex.: R$ 200 / 350 g = R$ 0,57/g). Alternável com o modo atual (digitar o custo unitário direto), sem exigir cadastro — é só uma calculadora auxiliar de conversão, o resultado vira o valor do campo existente.
@@ -24,6 +28,9 @@ Critério de corte: tudo que exige cadastro reutilizável (ingrediente, receita 
 - [x] **T12 — Revisão UI/UX macro + micro (15 pontos)**:
   - **Macro**: "Modo reverso"/"Ponto de Equilíbrio" viraram `Accordion` recolhido por padrão (menos rolagem); aba Precificação reordenada (Composição → Resumo → Accordion, em vez de Resumo aparecer com zeros antes dos campos); botão "Ver exemplo"/"Limpar" em cada bloco (`src/lib/exemplos.ts`, `src/lib/estados-iniciais.ts`) preenchendo números demonstrativos sem mexer no estado inicial real; aviso "Nada aqui é salvo" no header.
   - **Micro**: os 3 botões de export viraram um `ExportMenu` único (dropdown, com loading "Gerando…" e ícone de spinner); "Margem sobre o preço" unificado pra "Margem de Lucro" em todo lugar; "Taxa de Custo" ganhou `InfoBubble`; status "abaixo da meta" do CMV/CPV agora é verde (era cinza neutro, mas abaixo do ideal é bom sinal); campos inválidos (soma de % ≥ 100%) ganham borda vermelha via `aria-invalid` (o `Input` base já suportava, só faltava passar a prop); `FloatingLabelInput` ganhou prop `unidade` (sufixo fixo "R$"/"%" no campo, tirando repetição do texto do label); `InfoBubble` com área de toque maior; `SegmentedToggle` com navegação por setas do teclado; favicon trocado (era o padrão do Vite/shadcn, agora um ícone simples de gráfico).
+
+- [x] **T13 — Limpeza pós-revisão**: removido `dual-range-slider.tsx` e a dependência `@radix-ui/react-slider` (instalados no setup inicial, nunca usados em nenhum bloco — peso morto). Adicionado `.npmrc` com `audit=false` documentado, pra vulnerabilidade aceita do `xlsx` (ver T3) não virar ruído/quebra se algum dia um passo de `npm audit` entrar no CI.
+- [ ] **T14 — Analytics leve**: sem nenhum jeito de saber se/quanto o app é usado depois de mandado pro cliente — contradiz o próprio critério de "adiar persistência até validar uso". Candidato: Plausible ou Umami (sem cookie, hospedado externamente — não conflita com "sem banco de dados nosso"), rastreando pageview + eventos-chave (ex.: clique em Exportar, clique em "Ver exemplo"). Precisa de conta em serviço externo — decisão do usuário.
 
 ## v1 — fora de escopo por enquanto (persistência)
 
